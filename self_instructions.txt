@@ -1,0 +1,2 @@
+docker build . -t visual_side_radar
+docker run -it visual_side_radar

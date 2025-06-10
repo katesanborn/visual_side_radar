@@ -1,0 +1,9 @@
+<launch>
+    <arg name="display" default="number"/>
+    <group if="$(eval arg('display') == 'grid')">
+        <node pkg="radar_display" type="radar_grid_lat_long.py" name="radar_grid_lat_long" output="screen"/>
+    </group>
+    <group unless="$(eval arg('display') == 'grid' or arg('display') == 'angle')">
+        <node pkg="radar_display" type="radar_display.py" name="radar_display" output="screen"/>
+    </group>
+</launch>
