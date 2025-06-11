@@ -39,16 +39,15 @@ def curses_main(stdscr):
     curses.init_pair(1, curses.COLOR_GREEN, -1)  # Green text, default background
     GREEN_PAIR = curses.color_pair(1)
 
-    
     stdscr.nodelay(True)
     stdscr.timeout(200)
-    
+
     height, width = stdscr.getmaxyx()
 
     while not rospy.is_shutdown():
         new_height, new_width = stdscr.getmaxyx()
         if curses.is_term_resized(height, width):
-            height, width = new_height, new_width
+            height, width = new_width, new_height
             curses.resize_term(height, width)
             stdscr.erase()
 
@@ -59,60 +58,58 @@ def curses_main(stdscr):
         stdscr.addstr(0, 2, "L: Left Radar Tracks")
         stdscr.addstr(0, mid_x + 2, "R: Right Radar Tracks")
 
-        left_x = 2
-        right_x = mid_x + 2
-
-        left_groups = []
-        right_groups = []
-
-        for track_num in range(1, 11):
-            left_lines = []
-            right_lines = []
-            for subtrack in range(1, 7):
-                # Left
-                track_name = f"track_L{track_num}_{subtrack}"
-                x, y, z = tracks_data.get(track_name, (0, 0, 0))
-                left_lines.append((track_name, f"{track_name}: LONG={x:.2f}, LAT={y:.2f}, FLAG={z:.0f}", int(z) == 1))
-
-                # Right
-                track_name = f"track_R{track_num}_{subtrack}"
-                x, y, z = tracks_data.get(track_name, (0, 0, 0))
-                right_lines.append((track_name, f"{track_name}: LONG={x:.2f}, LAT={y:.2f}, FLAG={z:.0f}", int(z) == 1))
-
-            left_groups.append((f"L{track_num}", left_lines))
-            right_groups.append((f"R{track_num}", right_lines))
-
         box_height = 8
         spacing = 1
         total_box_height = box_height + spacing
 
-        max_groups = max(0, (height - 1) // total_box_height)
-        max_left_width = mid_x - 4
-        max_right_width = mid_x - 4
+        max_vertical = (height - 1) // total_box_height
+        need_columns = 10 > max_vertical
+        column_count = 2 if need_columns else 1
 
-        current_y = 1
-        for group_name, lines in left_groups[:max_groups]:
-            if current_y + box_height > height:
-                break
-            min_box_w = max(len(f"[ {group_name} ]") + 4, 20)  # Ensure room for title and box
-            box_w = max(min_box_w, min(max(len(line_text) for _, line_text, _ in lines) + 4, max_left_width))
-            draw_box(stdscr, current_y, left_x, box_height, box_w, title=group_name)
-            for i, (track_name, line_text, is_valid) in enumerate(lines):
-                attr = GREEN_PAIR if is_valid else curses.A_NORMAL
-                stdscr.addstr(current_y + 1 + i, left_x + 2, line_text[:box_w - 4], attr)
-            current_y += total_box_height
+        # Calculate column widths for each side
+        side_width = (mid_x - 4)
+        col_width = side_width // column_count
 
-        current_y = 1
-        for group_name, lines in right_groups[:max_groups]:
-            if current_y + box_height > height:
-                break
-            min_box_w = max(len(f"[ {group_name} ]") + 4, 20)  # Ensure room for title and box
-            box_w = max(min_box_w, min(max(len(line_text) for _, line_text, _ in lines) + 4, max_right_width))
-            draw_box(stdscr, current_y, right_x, box_height, box_w, title=group_name)
-            for i, (track_name, line_text, is_valid) in enumerate(lines):
-                attr = GREEN_PAIR if is_valid else curses.A_NORMAL
-                stdscr.addstr(current_y + 1 + i, right_x + 2, line_text[:box_w - 4], attr)
-            current_y += total_box_height
+        def draw_group_boxes(groups, side_base_x, max_side_x):
+            for i, (group_name, lines) in enumerate(groups):
+                col = i // max_vertical if need_columns else 0
+                row = i % max_vertical
+                top = 1 + row * total_box_height
+                left = side_base_x + col * col_width
+
+                if top + box_height > height or left + col_width > max_side_x:
+                    continue
+
+                min_box_w = max(len(f"[ {group_name} ]") + 4, 20)
+                box_w = max(min_box_w, min(max(len(line_text) for _, line_text, _ in lines) + 4, col_width - 2))
+                draw_box(stdscr, top, left, box_height, box_w, title=group_name)
+                for j, (track_name, line_text, is_valid) in enumerate(lines):
+                    attr = GREEN_PAIR if is_valid else curses.A_NORMAL
+                    stdscr.addstr(top + 1 + j, left + 2, line_text[:box_w - 4], attr)
+
+        # Build groups
+        left_groups = []
+        right_groups = []
+        for track_num in range(1, 11):
+            left_lines = []
+            right_lines = []
+            for subtrack in range(1, 7):
+                track_name = f"track_L{track_num}_{subtrack}"
+                display_name = f"L{track_num}_{subtrack}"
+                x, y, z = tracks_data.get(track_name, (0, 0, 0))
+                left_lines.append((track_name, f"{display_name}: LONG={x:5.0f}, LAT={y:4.0f}, FLAG={z:1.0f}", int(z) == 1))
+
+                track_name = f"track_R{track_num}_{subtrack}"
+                display_name = f"R{track_num}_{subtrack}"
+                x, y, z = tracks_data.get(track_name, (0, 0, 0))
+                right_lines.append((track_name, f"{display_name}: LONG={x:5.0f}, LAT={y:4.0f}, FLAG={z:1.0f}", int(z) == 1))
+
+            left_groups.append((f"L{track_num}", left_lines))
+            right_groups.append((f"R{track_num}", right_lines))
+
+        # Draw left and right
+        draw_group_boxes(left_groups, 2, mid_x - 2)
+        draw_group_boxes(right_groups, mid_x + 2, width - 2)
 
         stdscr.refresh()
 
