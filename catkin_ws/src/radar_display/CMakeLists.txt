@@ -10,5 +10,6 @@ catkin_install_python(PROGRAMS
   scripts/radar_grid_lat_long.py
   scripts/radar_track_simulator.py
   scripts/radar_angle.py
+  scripts/radar_grid_120.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
