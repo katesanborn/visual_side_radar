@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>radar_display</name>
+  <name>visual_side_radar</name>
   <version>0.0.0</version>
   <description>Radar visualization and simulator node</description>
   <maintainer email="you@example.com">Your Name</maintainer>

@@ -17,10 +17,10 @@ RUN rosdep update
 
 # Copy source files
 WORKDIR /
-COPY catkin_ws /catkin_ws
+COPY . /catkin_ws/src/visual_side_radar
 
 # Make scripts executable
-RUN chmod +x /catkin_ws/src/radar_display/scripts/*.py
+RUN chmod +x /catkin_ws/src/visual_side_radar/src/*.py
 
 # Build workspace
 RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && \
@@ -31,12 +31,6 @@ RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && \
 # Source environment on shell start
 RUN echo 'source /opt/ros/noetic/setup.bash' >> ~/.bashrc && \
     echo 'source /catkin_ws/devel/setup.bash' >> ~/.bashrc
-
-# Default command: launch the visualization
-# CMD ["/bin/bash", "-c", "source /opt/ros/noetic/setup.bash && \
-#                          source /catkin_ws/devel/setup.bash && \
-#                          roslaunch radar_display radar_display.launch"]
-
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
