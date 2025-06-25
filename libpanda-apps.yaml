@@ -2,22 +2,9 @@ apps:
   - name: visual_side_radar
     properties:
       - owns_panda: true
-    dependencies:
-      - apt: python3-pandas
-      - pip3: cantools
-      - pip3: shapely
     ros_repositories:
         - owner: jmscslgroup
           repo: can_to_ros
           branch_or_hash: kate_nissan_side_radar
-        - owner: jmscslgroup
-          repo: cbf
-          branch_or_hash: original_CBF_implementation_2021
-        - owner: jmscslgroup
-          repo: velocity_controller
-        - owner: jmscslgroup
-          repo: setpointreader
         - owner: katesanborn
           repo: visual_side_radar
-# How do I pass arguments to my launch file?
-# Which of the default dependencies and ROS repositories should I remove?
